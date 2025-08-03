@@ -11,7 +11,9 @@ const connectDB = async () => {
     });
     
     console.log('MongoDB connected successfully!');
-    console.log('Database:', mongoose.connection.db.databaseName);
+    if (mongoose.connection.db) {
+      console.log('Database:', mongoose.connection.db.databaseName);
+    }
     
   } catch (error) {
     console.error('MongoDB connection error:', error);
