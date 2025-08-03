@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+@font-face {
+  font-family: 'Arcade';
+  src: url('https://fonts.cdnfonts.com/css/arcade-classic');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@keyframes glitch {
+  0% {
+    text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,0,0.75), 0.025em 0.05em 0 rgba(0,0,255,0.75);
+  }
+  14% {
+    text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,0,0.75), 0.025em 0.05em 0 rgba(0,0,255,0.75);
+  }
+  15% {
+    text-shadow: -0.05em -0.025em 0 rgba(255,0,0,0.75), 0.025em 0.025em 0 rgba(0,255,0,0.75), -0.05em -0.05em 0 rgba(0,0,255,0.75);
+  }
+  49% {
+    text-shadow: -0.05em -0.025em 0 rgba(255,0,0,0.75), 0.025em 0.025em 0 rgba(0,255,0,0.75), -0.05em -0.05em 0 rgba(0,0,255,0.75);
+  }
+  50% {
+    text-shadow: 0.025em 0.05em 0 rgba(255,0,0,0.75), 0.05em 0 0 rgba(0,255,0,0.75), 0 -0.05em 0 rgba(0,0,255,0.75);
+  }
+  99% {
+    text-shadow: 0.025em 0.05em 0 rgba(255,0,0,0.75), 0.05em 0 0 rgba(0,255,0,0.75), 0 -0.05em 0 rgba(0,0,255,0.75);
+  }
+  100% {
+    text-shadow: -0.025em 0 0 rgba(255,0,0,0.75), -0.025em -0.025em 0 rgba(0,255,0,0.75), -0.025em -0.05em 0 rgba(0,0,255,0.75);
+  }
+}
+
+/* Custom animations */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+.animation-delay-500 {
+  animation-delay: 1.5s;
+}
+
+/* Text glitch effect */
+@keyframes text-glitch {
+  0% {
+    text-shadow: 0.05em 0 0 rgba(255, 0, 128, 0.75),
+                -0.05em -0.025em 0 rgba(102, 236, 255, 0.75);
+  }
+  14% {
+    text-shadow: 0.05em 0 0 rgba(255, 0, 128, 0.75),
+                -0.05em -0.025em 0 rgba(102, 236, 255, 0.75);
+  }
+  15% {
+    text-shadow: -0.05em -0.025em 0 rgba(255, 0, 128, 0.75),
+                0.025em 0.025em 0 rgba(102, 236, 255, 0.75);
+  }
+  49% {
+    text-shadow: -0.05em -0.025em 0 rgba(255, 0, 128, 0.75),
+                0.025em 0.025em 0 rgba(102, 236, 255, 0.75);
+  }
+  50% {
+    text-shadow: 0.025em 0.05em 0 rgba(255, 0, 128, 0.75),
+                0.05em 0 0 rgba(102, 236, 255, 0.75);
+  }
+  99% {
+    text-shadow: 0.025em 0.05em 0 rgba(255, 0, 128, 0.75),
+                0.05em 0 0 rgba(102, 236, 255, 0.75);
+  }
+  100% {
+    text-shadow: 0.05em 0 0 rgba(255, 0, 128, 0.75),
+                -0.05em -0.025em 0 rgba(102, 236, 255, 0.75);
+  }
+}
+
+.text-glitch-effect:hover {
+  animation: text-glitch 2s infinite;
+}
+
+@layer base {
+  body {
+    @apply bg-retro-black text-white font-sans;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-image: 
+      radial-gradient(circle at 25px 25px, rgba(255, 0, 255, 0.2) 2px, transparent 0),
+      radial-gradient(circle at 75px 75px, rgba(0, 240, 255, 0.2) 2px, transparent 0);
+    background-size: 100px 100px;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-pixel;
+  }
+
+  .dark {
+    @apply bg-retro-black text-white;
+  }
+
+  .light {
+    @apply bg-gray-100 text-dark-purple;
+  }
+}
+
+@layer components {
+  .neon-text {
+    @apply text-neon-pink;
+    text-shadow: 0 0 5px #FF00FF, 0 0 10px #FF00FF;
+  }
+  
+  .neon-border {
+    @apply border-2 border-neon-blue;
+    box-shadow: 0 0 5px #00F0FF, 0 0 10px #00F0FF;
+  }
+  
+  .pixel-btn {
+    @apply bg-retro-black text-white font-pixel py-2 px-4 border-2 border-white transition-all duration-200;
+  }
+  
+  .pixel-btn:hover {
+    @apply bg-white text-retro-black;
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0 white;
+  }
+  
+  .arcade-card {
+    @apply bg-dark-purple border-2 border-neon-purple p-4 rounded;
+    box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+  }
+  
+  .glitch-text {
+    @apply relative;
+    text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,0,0.75), 0.025em 0.05em 0 rgba(0,0,255,0.75);
+    animation: glitch 0.5s infinite;
+  }
+}

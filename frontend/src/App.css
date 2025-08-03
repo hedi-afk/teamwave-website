@@ -1,0 +1,105 @@
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes flicker {
+  0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% {
+    opacity: 0.99;
+  }
+  20%, 21.999%, 63%, 63.999%, 65%, 69.999% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes pixel-movement {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(5px);
+  }
+}
+
+.scanline {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 999;
+  pointer-events: none;
+  animation: scanline 8s linear infinite;
+}
+
+.dark .scanline {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.light .scanline {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.content-container {
+  flex: 1;
+  padding: 1rem;
+  overflow-x: hidden;
+}
+
+.flicker-effect {
+  animation: flicker 0.3s infinite alternate;
+}
+
+.pixel-effect {
+  image-rendering: pixelated;
+}
+
+.animate-pixel {
+  animation: pixel-movement 0.2s infinite alternate;
+}
