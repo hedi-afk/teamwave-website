@@ -288,48 +288,169 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Featured Games Section */}
-      <section className="py-12 sm:py-16 bg-dark-purple/20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-pixel text-white mb-4">FEATURED GAMES</h2>
-            <div className="w-24 h-1 bg-gray-500 mx-auto mb-6"></div>
-            <p className="text-gray-300 max-w-2xl mx-auto text-sm sm:text-base px-4">
-              Discover our competitive titles and join the action
+      <section className="py-16 sm:py-20 bg-gradient-to-br from-dark-purple/10 via-retro-black to-dark-purple/20 relative overflow-hidden">
+        {/* Background decorative elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-10 w-32 h-32 bg-neon-pink/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-10 w-40 h-40 bg-neon-blue/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-neon-green/5 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.div 
+            className="text-center mb-12 sm:mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-pixel text-white mb-4">
+              <span className="text-neon-pink">FEATURED</span>{" "}
+              <span className="text-neon-blue">GAMES</span>
+            </h2>
+            <div className="w-32 h-1 bg-gradient-to-r from-neon-pink via-neon-purple to-neon-blue mx-auto mb-6"></div>
+            <p className="text-gray-300 max-w-3xl mx-auto text-lg sm:text-xl px-4 leading-relaxed">
+              Our professional teams compete at the highest level in these premier titles. 
+              Each game represents our commitment to excellence in competitive esports.
             </p>
-          </div>
+          </motion.div>
 
           {loading ? (
-            <div className="text-center">
-              <p className="text-neon-purple text-xl font-pixel">LOADING GAMES...</p>
-            </div>
+            <motion.div 
+              className="text-center py-20"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="inline-flex items-center space-x-3">
+                <div className="w-6 h-6 bg-neon-pink rounded-full animate-pulse"></div>
+                <div className="w-6 h-6 bg-neon-blue rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-6 h-6 bg-neon-green rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+              </div>
+              <p className="text-neon-purple text-xl font-pixel mt-4">LOADING GAMES...</p>
+            </motion.div>
           ) : error ? (
-            <div className="text-center">
+            <motion.div 
+              className="text-center py-20"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
               <p className="text-neon-red text-xl">{error}</p>
-            </div>
+            </motion.div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {featuredGames.map((game, index) => (
                 <motion.div
                   key={game._id}
-                  className="arcade-card bg-dark-purple/30 overflow-hidden"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
+                  className="group relative"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  whileHover={{ y: -8 }}
                 >
-                  <div className="p-6 text-center">
-                    <h3 className="text-xl font-arcade text-gray-300 mb-4">{game.name}</h3>
-                    <Link 
-                      to="/events" 
-                      className="inline-block pixel-btn bg-gray-600 hover:bg-gray-500 text-white text-sm"
-                    >
-                      VIEW TOURNAMENTS
-                    </Link>
+                  {/* Main Card */}
+                  <div className="relative bg-gradient-to-br from-dark-purple/40 to-dark-purple/20 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl group-hover:shadow-neon-purple/20 transition-all duration-500">
+                    {/* Animated border gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-neon-pink via-neon-purple to-neon-blue opacity-0 group-hover:opacity-20 transition-opacity duration-500 rounded-2xl"></div>
+                    
+                    {/* Card Header with Game Icon */}
+                    <div className="relative p-6 sm:p-8">
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-gradient-to-br from-neon-pink to-neon-purple rounded-xl flex items-center justify-center shadow-lg">
+                            <span className="text-2xl">🎮</span>
+                          </div>
+                                                     <div>
+                             <h3 className="text-xl sm:text-2xl font-pixel text-white group-hover:text-neon-blue transition-colors duration-300">
+                               {game.name}
+                             </h3>
+                             <p className="text-neon-green text-sm font-arcade">Pro Team Active</p>
+                           </div>
+                        </div>
+                        
+                        {/* Featured Badge */}
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-neon-pink rounded-full blur-sm opacity-50"></div>
+                          <div className="relative bg-neon-pink text-dark-purple text-xs font-bold px-3 py-1 rounded-full">
+                            FEATURED
+                          </div>
+                        </div>
+                      </div>
+
+                                             {/* Game Stats */}
+                       <div className="grid grid-cols-2 gap-4 mb-6">
+                         <div className="bg-dark-purple/30 rounded-lg p-3 text-center border border-gray-600/30">
+                           <div className="text-neon-green text-lg font-pixel">Pro</div>
+                           <div className="text-gray-400 text-xs">Team</div>
+                         </div>
+                         <div className="bg-dark-purple/30 rounded-lg p-3 text-center border border-gray-600/30">
+                           <div className="text-neon-blue text-lg font-pixel">Active</div>
+                           <div className="text-gray-400 text-xs">Competing</div>
+                         </div>
+                       </div>
+
+                                             
+                    </div>
+
+                    {/* Decorative corner elements */}
+                    <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-neon-pink opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-neon-blue opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-neon-blue opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-neon-pink opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  </div>
+
+                  {/* Floating particles effect */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    <motion.div 
+                      className="absolute top-4 right-4 w-2 h-2 bg-neon-pink rounded-full"
+                      animate={{ 
+                        y: [0, -10, 0],
+                        opacity: [0.5, 1, 0.5]
+                      }}
+                      transition={{ 
+                        duration: 2,
+                        repeat: Infinity,
+                        delay: index * 0.3
+                      }}
+                    />
+                    <motion.div 
+                      className="absolute bottom-6 left-6 w-1 h-1 bg-neon-blue rounded-full"
+                      animate={{ 
+                        y: [0, -8, 0],
+                        opacity: [0.3, 0.8, 0.3]
+                      }}
+                      transition={{ 
+                        duration: 1.5,
+                        repeat: Infinity,
+                        delay: index * 0.5
+                      }}
+                    />
                   </div>
                 </motion.div>
               ))}
             </div>
           )}
+
+                     {/* Call to Action */}
+           <motion.div 
+             className="text-center mt-12 sm:mt-16"
+             initial={{ opacity: 0, y: 20 }}
+             whileInView={{ opacity: 1, y: 0 }}
+             viewport={{ once: true }}
+             transition={{ duration: 0.6, delay: 0.3 }}
+           >
+             <div className="inline-flex items-center space-x-4 bg-dark-purple/30 backdrop-blur-sm border border-gray-700/50 rounded-full px-6 py-3">
+               <span className="text-neon-green text-sm font-arcade">Support our pro teams?</span>
+               <Link 
+                 to="/members?section=teams" 
+                 className="pixel-btn bg-neon-green text-dark-purple border-neon-green hover:bg-dark-purple hover:text-neon-green text-sm font-arcade transition-all duration-300"
+               >
+                 MEET OUR TEAMS
+               </Link>
+             </div>
+           </motion.div>
         </div>
       </section>
 

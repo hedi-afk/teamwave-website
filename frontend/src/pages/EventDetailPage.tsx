@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import config from '../config';
-import { findEventById } from '../mocks/eventData';
+
 import RegistrationForm from '../components/RegistrationForm';
 import { format } from 'date-fns';
 import uploadService from '../services/uploadService';
@@ -36,7 +36,7 @@ const EventDetailPage: React.FC = () => {
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [useMockData, setUseMockData] = useState(false);
+
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
 
   useEffect(() => {
@@ -48,23 +48,11 @@ const EventDetailPage: React.FC = () => {
         setEvent(response.data);
         setLoading(false);
       } catch (error) {
-        console.warn('Error fetching from API, falling back to mock data:', error);
+        console.error('Error fetching from API:', error);
         
-        // Fallback to mock data
-        if (id) {
-          const mockEvent = findEventById(id);
-          if (mockEvent) {
-            setEvent(mockEvent);
-            setUseMockData(true);
-            setLoading(false);
-          } else {
-            setError('Event not found.');
-            setLoading(false);
-          }
-        } else {
-          setError('Invalid event ID.');
-          setLoading(false);
-        }
+        // If API fails, show error
+        setError('Failed to load event. Please try again later.');
+        setLoading(false);
       }
     };
 
@@ -138,11 +126,7 @@ const EventDetailPage: React.FC = () => {
       className="min-h-screen py-12"
     >
       <div className="container mx-auto px-4">
-        {useMockData && (
-          <div className="mb-4 text-neon-pink text-sm text-center p-2 bg-neon-pink/10 rounded">
-            Using mock data - API connection unavailable
-          </div>
-        )}
+
         
         <div className="mb-8">
           <Link 
@@ -185,7 +169,7 @@ const EventDetailPage: React.FC = () => {
             >
               <div className="w-full h-48 sm:h-64 md:h-80 overflow-hidden">
                 <img 
-                  src={useMockData ? `https://placehold.co/600x400/1A0033/00FFFF?text=${event.game}` : getImageUrl(event.image, event.game)} 
+                  src={getImageUrl(event.image, event.game)} 
                   alt={event.name}
                   className="w-full h-full object-cover"
                   onError={(e) => {

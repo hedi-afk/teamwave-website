@@ -5,6 +5,7 @@ const connectDB = async () => {
   try {
     const mongoUri = config.mongoUri;
     console.log('Connecting to MongoDB...');
+    console.log('MongoDB URI (masked):', mongoUri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@'));
     
     await mongoose.connect(mongoUri, {
       // MongoDB connection options
@@ -17,7 +18,12 @@ const connectDB = async () => {
     
   } catch (error) {
     console.error('MongoDB connection error:', error);
-    process.exit(1);
+    // Don't exit in production, let the app continue with limited functionality
+    if (process.env.NODE_ENV === 'production') {
+      console.log('Continuing without database connection in production...');
+    } else {
+      process.exit(1);
+    }
   }
 };
 

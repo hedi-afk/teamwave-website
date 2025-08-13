@@ -138,121 +138,6 @@ app.get('/api/health', (req: Request, res: Response) => {
   });
 });
 
-// Test endpoint for debugging
-app.get('/api/test', (req: Request, res: Response) => {
-  res.json({ 
-    message: 'TeamWave API is running!',
-    timestamp: new Date().toISOString(),
-    environment: config.environment,
-    port: config.port
-  });
-});
-
-// Test endpoint for file system debugging
-app.get('/api/debug-files', (req: Request, res: Response) => {
-  const uploadsDir = path.join(process.cwd(), 'uploads');
-  const testImagePath = path.join(uploadsDir, 'test-image.jpg');
-  const newsDir = path.join(uploadsDir, 'news');
-  const newsTestImagePath = path.join(newsDir, 'test-image.jpg');
-  
-  let uploadsDirExists = fs.existsSync(uploadsDir);
-  let testImageExists = fs.existsSync(testImagePath);
-  let newsDirExists = fs.existsSync(newsDir);
-  let newsTestImageExists = fs.existsSync(newsTestImagePath);
-  
-  try {
-    
-    // Ensure directories exist
-    if (!uploadsDirExists) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-      console.log('Created uploads directory:', uploadsDir);
-    }
-    uploadsDirExists = fs.existsSync(uploadsDir);
-    
-    if (!newsDirExists) {
-      fs.mkdirSync(newsDir, { recursive: true });
-      console.log('Created news directory:', newsDir);
-    }
-    newsDirExists = fs.existsSync(newsDir);
-    
-    // Create test image for fallback if it doesn't exist
-    if (!fs.existsSync(testImagePath)) {
-      // Create a simple 1x1 pixel JPEG image
-      const imageData = Buffer.from([
-        0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x48, 
-        0x00, 0x48, 0x00, 0x00, 0xff, 0xdb, 0x00, 0x43, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc2, 0x00, 0x0b, 0x08, 0x00, 0x01, 0x00, 
-        0x01, 0x01, 0x01, 0x11, 0x00, 0xff, 0xc4, 0x00, 0x14, 0x10, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 
-        0x00, 0x01, 0x3f, 0x10
-      ]);
-      
-      fs.writeFileSync(testImagePath, imageData);
-      console.log('Created test image:', testImagePath);
-    }
-    testImageExists = fs.existsSync(testImagePath);
-    
-    // Ensure test image exists in news folder as well
-    if (!fs.existsSync(newsTestImagePath) && testImageExists) {
-      fs.copyFileSync(testImagePath, newsTestImagePath);
-      console.log('Copied test image to news folder:', newsTestImagePath);
-    }
-    newsTestImageExists = fs.existsSync(newsTestImagePath);
-    
-    res.json({
-      success: true,
-      paths: {
-        uploadsDir: {
-          path: uploadsDir,
-          exists: uploadsDirExists
-        },
-        testImage: {
-          path: testImagePath,
-          exists: testImageExists,
-          url: '/uploads/test-image.jpg',
-          directUrl: '/api/direct-test-image'
-        },
-        newsDir: {
-          path: newsDir,
-          exists: newsDirExists
-        },
-        newsTestImage: {
-          path: newsTestImagePath,
-          exists: newsTestImageExists,
-          url: '/uploads/news/test-image.jpg'
-        }
-      }
-    });
-  } catch (error: any) {
-    console.error('Error ensuring test image:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      paths: {
-        uploadsDir: {
-          path: uploadsDir || 'unknown',
-          exists: uploadsDirExists || false
-        },
-        testImage: {
-          path: testImagePath || 'unknown',
-          exists: testImageExists || false
-        },
-        newsDir: {
-          path: newsDir || 'unknown',
-          exists: newsDirExists || false
-        },
-        newsTestImage: {
-          path: newsTestImagePath || 'unknown',
-          exists: newsTestImageExists || false
-        }
-      }
-    });
-  }
-});
-
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(`[ERROR] ${req.method} ${req.url}:`, err);
@@ -271,5 +156,5 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// Export for Vercel serverless functions
+// Export for server
 export default app; 

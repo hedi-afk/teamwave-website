@@ -7,13 +7,15 @@ import {
   createGame,
   updateGame,
   deleteGame,
-  updateGameOrder
+  updateGameOrder,
+  debugGames
 } from '../controllers/gameController';
 
 const router = express.Router();
 
 // Public routes
 router.get('/', getAllGames);
+router.get('/debug', debugGames); // Debug endpoint
 router.get('/active', getActiveGames);
 router.get('/featured', getFeaturedGames);
 router.get('/:id', getGameById);

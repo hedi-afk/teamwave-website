@@ -17,7 +17,7 @@ import ForumPage from './pages/ForumPage';
 import ArticlePage from './pages/ArticlePage';
 import ContactPage from './pages/ContactPage';
 import NotFoundPage from './pages/NotFoundPage';
-import TestPage from './pages/TestPage';
+
 import PartnerDetailPage from './pages/PartnerDetailPage';
 import SponsorDetailPage from './pages/SponsorDetailPage';
 import MemberDetailPage from './pages/MemberDetailPage';
@@ -27,6 +27,7 @@ import TeamDetailPage from './pages/TeamDetailPage';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminEventsPage from './pages/admin/EventsPage';
+import AdminRegistrationsPage from './pages/admin/AdminRegistrationsPage';
 import AdminMembersPage from './pages/admin/MembersPage';
 import AdminTeamsPage from './pages/admin/TeamsPage';
 import AdminGamesPage from './pages/admin/GamesPage';
@@ -36,8 +37,7 @@ import AdminShopPage from './pages/admin/ShopPage';
 import AdminPartnersPage from './pages/admin/PartnersPage';
 import AdminMessagesPage from './pages/admin/MessagesPage';
 import AdminSettingsPage from './pages/admin/SettingsPage';
-import TestImageUpload from './pages/admin/TestImageUpload';
-import ApiTestPage from './pages/admin/ApiTestPage';
+
 
 // Auth components
 import ProtectedRoute from './components/admin/ProtectedRoute';
@@ -76,7 +76,7 @@ function App() {
                 <Route path="partner/:id" element={<PartnerDetailPage />} />
                 <Route path="sponsor/:id" element={<SponsorDetailPage />} />
                 <Route path="contact" element={<ContactPage />} />
-                <Route path="test" element={<TestPage />} />
+
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
 
@@ -88,6 +88,7 @@ function App() {
                 <Route index element={<Navigate to="/admin/dashboard" replace />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="events" element={<AdminEventsPage />} />
+                <Route path="registrations" element={<AdminRegistrationsPage />} />
                 <Route path="members" element={<AdminMembersPage />} />
                 <Route path="teams" element={<AdminTeamsPage />} />
                 <Route path="games" element={<AdminGamesPage />} />
@@ -97,8 +98,7 @@ function App() {
                 <Route path="partners" element={<AdminPartnersPage />} />
                 <Route path="messages" element={<AdminMessagesPage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
-                <Route path="test-image" element={<TestImageUpload />} />
-                <Route path="api-test" element={<ApiTestPage />} />
+
               </Route>
             </Routes>
           </AnimatePresence>

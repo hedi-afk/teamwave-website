@@ -1,6 +1,6 @@
 // Configuration file for the frontend application
 
-// Base API configuration - use environment variables for deployment
+// Base API configuration - use environment variables for configuration
 const API_PORT = process.env.REACT_APP_API_PORT || 5000;
 const API_HOST = process.env.REACT_APP_API_HOST || 'localhost';
 const API_PROTOCOL = process.env.REACT_APP_API_PROTOCOL || 'http';

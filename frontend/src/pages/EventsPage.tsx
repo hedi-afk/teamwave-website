@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import config from '../config';
-import { eventsMockData } from '../mocks/eventData';
+
 import uploadService from '../services/uploadService';
 
 interface Event {
@@ -37,7 +37,7 @@ const EventsPage: React.FC = () => {
   const [error, setError] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterGame, setFilterGame] = useState<string>('all');
-  const [useMockData, setUseMockData] = useState(false);
+
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -47,11 +47,11 @@ const EventsPage: React.FC = () => {
         setEvents(data);
         setLoading(false);
       } catch (error) {
-        console.warn('Error fetching from API, falling back to mock data:', error);
+        console.error('Error fetching from API:', error);
         
-        // Use mock data as fallback
-        setEvents(eventsMockData as any); // Type casting as any to avoid potential type issues
-        setUseMockData(true);
+        // If API fails, set empty array - don't use mock data in production
+        setEvents([]);
+
         setLoading(false);
       }
     };
@@ -105,11 +105,7 @@ const EventsPage: React.FC = () => {
   return (
     <div className="bg-retro-black min-h-screen">
       <div className="container mx-auto px-4 pt-24 pb-12">
-        {useMockData && (
-          <div className="mb-4 text-neon-pink text-sm text-center p-2 bg-neon-pink/10 rounded">
-            Using mock data - API connection unavailable
-          </div>
-        )}
+
       
         {/* Hero Section */}
         <div className="text-center mb-6 sm:mb-8">
@@ -230,7 +226,7 @@ const EventsPage: React.FC = () => {
                     <div className="relative md:col-span-1">
                       <div className="w-full h-40 sm:h-48 md:h-64 overflow-hidden">
                         <img 
-                          src={useMockData ? `https://placehold.co/800x400/1A0033/${event.game === 'CS:GO' ? 'FFFFFF' : (event.game === 'Valorant' ? 'FF00FF' : '00FF00')}?text=${event.game}` : getImageUrl(event.image)}
+                          src={getImageUrl(event.image)}
                           alt={event.name}
                           className="w-full h-full object-cover"
                           onError={(e) => {

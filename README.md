@@ -2,135 +2,157 @@
 
 A professional esports organization website built with React, TypeScript, Node.js, and MongoDB.
 
-## 🚀 Quick Deploy to Vercel
+## 🚀 Quick Start
 
-### Option 1: Deploy with Vercel CLI
+### Prerequisites
 
-1. **Install Vercel CLI**
+- Node.js (v16 or higher)
+- MongoDB (local installation or MongoDB Atlas)
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository**
    ```bash
-   npm i -g vercel
+   git clone <repository-url>
+   cd site
    ```
 
-2. **Login to Vercel**
+2. **Install dependencies**
    ```bash
-   vercel login
+   npm run install:all
    ```
 
-3. **Deploy from project root**
-   ```bash
-   vercel
+3. **Set up environment variables**
+   
+   Create a `.env` file in the `backend` directory:
+   ```env
+   NODE_ENV=development
+   PORT=5000
+   MONGO_URI=mongodb://localhost:27017/teamwave-db
+   JWT_SECRET=your-super-secret-jwt-key-here
+   JWT_EXPIRATION=1d
    ```
 
-### Option 2: Deploy via GitHub
-
-1. **Push your code to GitHub**
-   ```bash
-   git add .
-   git commit -m "Initial commit"
-   git push origin main
+   Create a `.env` file in the `frontend` directory:
+   ```env
+   REACT_APP_API_HOST=localhost
+   REACT_APP_API_PORT=5000
+   REACT_APP_API_PROTOCOL=http
    ```
 
-2. **Connect to Vercel**
-   - Go to [vercel.com](https://vercel.com)
-   - Sign up/Login with GitHub
-   - Click "New Project"
-   - Import your GitHub repository
-   - Configure environment variables (see below)
-   - Deploy!
+4. **Start development servers**
+   ```bash
+   npm run dev
+   ```
 
-## 🔧 Environment Variables
-
-### Backend Environment Variables
-Create a `.env` file in the `backend` directory:
-
-```env
-NODE_ENV=production
-PORT=5000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret_key
-JWT_EXPIRATION=1d
-```
-
-### Frontend Environment Variables
-Create a `.env` file in the `frontend` directory:
-
-```env
-REACT_APP_API_HOST=your-vercel-domain.vercel.app
-REACT_APP_API_PORT=443
-REACT_APP_API_PROTOCOL=https
-```
-
-### Vercel Environment Variables
-Set these in your Vercel project settings:
-
-**Backend Variables:**
-- `MONGO_URI`: Your MongoDB connection string
-- `JWT_SECRET`: Your JWT secret key
-- `JWT_EXPIRATION`: Token expiration time (e.g., "1d")
-
-**Frontend Variables:**
-- `REACT_APP_API_HOST`: Your Vercel domain
-- `REACT_APP_API_PORT`: 443 (for HTTPS)
-- `REACT_APP_API_PROTOCOL`: https
+   This will start both the backend (port 5000) and frontend (port 3000) servers.
 
 ## 📁 Project Structure
 
 ```
 site/
 ├── frontend/          # React TypeScript frontend
+│   ├── src/
+│   │   ├── components/    # React components
+│   │   ├── pages/         # Page components
+│   │   ├── services/      # API services
+│   │   └── context/       # React context
+│   └── public/            # Static assets
 ├── backend/           # Node.js Express backend
-├── vercel.json        # Vercel deployment config
+│   ├── controllers/   # Route controllers
+│   ├── models/        # MongoDB models
+│   ├── routes/        # API routes
+│   ├── middleware/    # Express middleware
+│   └── config/        # Configuration files
 └── package.json       # Root package.json
 ```
 
-## 🛠️ Local Development
+## 🛠️ Development
 
-1. **Install dependencies**
-   ```bash
-   npm run install:all
-   ```
+### Available Scripts
 
-2. **Start development servers**
-   ```bash
-   npm run dev
-   ```
+- `npm run dev` - Start both frontend and backend in development mode
+- `npm run frontend` - Start only the frontend server
+- `npm run backend` - Start only the backend server
+- `npm run build` - Build both frontend and backend for production
+- `npm run install:all` - Install dependencies for all packages
 
-3. **Build for production**
-   ```bash
-   npm run build
-   ```
+### Backend API
 
-## 🚀 Deployment Features
+The backend provides RESTful APIs for:
 
-- **Automatic builds** on every push to main branch
-- **Preview deployments** for pull requests
-- **Serverless functions** for the backend API
-- **Static hosting** for the React frontend
-- **Custom domains** support
-- **Environment variables** management
+- **Authentication** - User registration and login
+- **Events** - Tournament and event management
+- **Members** - Team member profiles
+- **Teams** - Team management
+- **News** - News articles and updates
+- **Partners** - Partner/sponsor information
+- **Products** - Shop/merchandise
+- **Videos** - Video content management
+- **Contact** - Contact form submissions
 
-## 📝 Deployment Checklist
+### Frontend Features
 
-- [ ] MongoDB database set up
-- [ ] Environment variables configured in Vercel
-- [ ] GitHub repository connected to Vercel
-- [ ] Custom domain configured (optional)
-- [ ] SSL certificate enabled (automatic with Vercel)
+- **Responsive Design** - Mobile-first approach
+- **Admin Panel** - Content management interface
+- **Image Upload** - File upload with cropping
+- **Rich Text Editor** - Content editing capabilities
+- **Real-time Updates** - Live data synchronization
 
-## 🔗 Useful Links
+## 🗄️ Database
 
-- [Vercel Documentation](https://vercel.com/docs)
-- [MongoDB Atlas](https://www.mongodb.com/atlas)
-- [React Documentation](https://reactjs.org/docs/)
-- [Express.js Documentation](https://expressjs.com/)
+The application uses MongoDB with the following collections:
+
+- Users
+- Events
+- Members
+- Teams
+- News
+- Partners
+- Products
+- Videos
+- Contact Messages
+- Registrations
+
+## 🔧 Configuration
+
+### Environment Variables
+
+**Backend (.env in backend directory):**
+- `NODE_ENV` - Environment (development/production)
+- `PORT` - Server port (default: 5000)
+- `MONGO_URI` - MongoDB connection string
+- `JWT_SECRET` - JWT signing secret
+- `JWT_EXPIRATION` - Token expiration time
+
+**Frontend (.env in frontend directory):**
+- `REACT_APP_API_HOST` - Backend API host
+- `REACT_APP_API_PORT` - Backend API port
+- `REACT_APP_API_PROTOCOL` - API protocol (http/https)
+
+## 🧪 Testing
+
+To run tests (when implemented):
+```bash
+npm test
+```
+
+## 📝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
 ## 📞 Support
 
-For deployment issues or questions, please check:
-1. Vercel deployment logs
-2. Environment variables configuration
-3. MongoDB connection string
-4. API endpoint configuration
+For questions or issues:
+1. Check the console logs for errors
+2. Verify environment variables are set correctly
+3. Ensure MongoDB is running and accessible
+4. Check API endpoints are responding
 
 ---
 

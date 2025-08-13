@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import ImageCropper from './ImageCropper';
 import uploadService from '../../services/uploadService';
 import gameService from '../../services/gameService';
@@ -27,7 +27,18 @@ const ImageUploadWithCropper: React.FC<ImageUploadWithCropperProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Update display when initialImage changes
+  useEffect(() => {
+    // Clear preview when initialImage changes to show the new image
+    setPreviewUrl('');
+  }, [initialImage]);
+  
+  // Create a unique key for the image to force re-render when it changes
+  const imageKey = initialImage || 'no-image';
   const imageUrl = previewUrl || (initialImage ? uploadService.getImageUrl(initialImage) : '');
+  
+  // Add cache-busting parameter to prevent browser caching
+  const imageUrlWithCacheBust = imageUrl ? `${imageUrl}?t=${Date.now()}` : '';
   
   // Handle file selection
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,12 +175,13 @@ const ImageUploadWithCropper: React.FC<ImageUploadWithCropperProps> = ({
           
           {imageUrl ? (
             <div className="space-y-4">
-              <div className="relative inline-block">
-                <img
-                  src={imageUrl}
-                  alt="Preview"
-                  className="w-32 h-32 object-cover rounded-lg mx-auto shadow-lg"
-                />
+                             <div className="relative inline-block">
+                 <img
+                   key={imageKey}
+                   src={imageUrlWithCacheBust}
+                   alt="Preview"
+                   className="w-32 h-32 object-cover rounded-lg mx-auto shadow-lg"
+                 />
                 {isUploading && (
                   <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
                     <div className="text-white text-sm">Uploading...</div>

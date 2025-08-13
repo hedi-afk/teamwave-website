@@ -12,6 +12,22 @@ export const getAllGames = async (req: Request, res: Response) => {
   }
 };
 
+// Debug endpoint to check game names
+export const debugGames = async (req: Request, res: Response) => {
+  try {
+    const games = await Game.find({}, 'name').sort({ name: 1 });
+    const names = games.map(g => g.name);
+    res.json({ 
+      count: games.length, 
+      names: names,
+      message: 'Current game names in database'
+    });
+  } catch (error) {
+    console.error('Error in debug endpoint:', error);
+    res.status(500).json({ message: 'Failed to get debug info' });
+  }
+};
+
 // Get active games only
 export const getActiveGames = async (req: Request, res: Response) => {
   try {
@@ -53,8 +69,33 @@ export const createGame = async (req: Request, res: Response) => {
   try {
     const { name, featured, order } = req.body;
     
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Game name is required' });
+    }
+    
+    const trimmedName = name.trim();
+    
+    // Check if a game with this name already exists (case-insensitive)
+    const existingGame = await Game.findOne({ 
+      name: { $regex: new RegExp(`^${trimmedName}$`, 'i') }
+    });
+    
+    if (existingGame) {
+      return res.status(400).json({ 
+        message: `Game with the name "${trimmedName}" already exists` 
+      });
+    }
+    
+    // Also check for exact match
+    const exactMatch = await Game.findOne({ name: trimmedName });
+    if (exactMatch) {
+      return res.status(400).json({ 
+        message: `Game with the name "${trimmedName}" already exists` 
+      });
+    }
+    
     const game = new Game({
-      name,
+      name: trimmedName,
       featured: featured || false,
       order: order || 0
     });
@@ -64,7 +105,14 @@ export const createGame = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Error creating game:', error);
     if (error.code === 11000) {
-      res.status(400).json({ message: 'Game with this name already exists' });
+      // Get more details about the duplicate key error
+      console.error('Duplicate key error details:', error.keyValue);
+      
+
+      
+      res.status(400).json({ 
+        message: `Game with the name "${req.body.name?.trim()}" already exists. Please try a different name.` 
+      });
     } else {
       res.status(500).json({ message: 'Failed to create game' });
     }
@@ -104,11 +152,17 @@ export const updateGame = async (req: Request, res: Response) => {
 // Delete game
 export const deleteGame = async (req: Request, res: Response) => {
   try {
-    const game = await Game.findByIdAndDelete(req.params.id);
+    const game = await Game.findById(req.params.id);
     
     if (!game) {
       return res.status(404).json({ message: 'Game not found' });
     }
+    
+    // Delete the game and wait for the operation to complete
+    await Game.findByIdAndDelete(req.params.id);
+    
+    // Force a small delay to ensure the database operation completes
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     res.json({ message: 'Game deleted successfully' });
   } catch (error) {

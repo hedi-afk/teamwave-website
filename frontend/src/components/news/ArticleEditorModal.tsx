@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import RichTextEditor from '../ui/RichTextEditor';
-import ImageUploader from '../ui/ImageUploader';
+import ImageUploadWithCropper from '../ui/ImageUploadWithCropper';
 import { INewsArticle } from '../../services/newsService';
 
 interface ArticleEditorModalProps {
@@ -284,15 +284,20 @@ const ArticleEditorModal: React.FC<ArticleEditorModalProps> = ({
             <label className="block text-sm font-medium text-white mb-1">
               Featured Image*
             </label>
-            <ImageUploader
+            <ImageUploadWithCropper
               onImageUpload={handleImageUpload}
-              existingImage={formData.image}
+              initialImage={formData.image}
               uploadType="news"
+              aspectRatio={16/9}
+              placeholderText="Upload News Image"
               className={formErrors.image ? 'border-red-500' : ''}
             />
             {formErrors.image && (
               <p className="text-red-500 text-xs mt-1">{formErrors.image}</p>
             )}
+            <p className="text-gray-500 text-xs mt-2">
+              Recommended aspect ratio: 16:9 (landscape). You can crop and resize your image after upload.
+            </p>
           </div>
           
           <div className="flex items-center">

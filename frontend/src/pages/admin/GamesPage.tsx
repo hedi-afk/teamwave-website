@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import gameService, { IGame, GameFormData } from '../../services/gameService';
 
 const GamesPage: React.FC = () => {
@@ -54,6 +53,7 @@ const GamesPage: React.FC = () => {
     e.preventDefault();
     
     try {
+      setError(null); // Clear any existing errors
       setLoading(true);
       
       const newGame = await gameService.createGame({
@@ -61,7 +61,9 @@ const GamesPage: React.FC = () => {
         order: games.length
       });
       
-      setGames([...games, newGame]);
+      // Refresh the games list from the server to ensure consistency
+      await fetchGames();
+      
       setSuccess(`Game "${newGame.name}" was successfully created!`);
       setTimeout(() => setSuccess(null), 3000);
       
@@ -111,16 +113,24 @@ const GamesPage: React.FC = () => {
     if (!gameToDelete) return;
     
     try {
+      setError(null); // Clear any existing errors
       setLoading(true);
       
       await gameService.deleteGame(gameToDelete.id);
       
-      setGames(games.filter(game => game._id !== gameToDelete.id));
+      // Refresh the games list from the server to ensure consistency
+      await fetchGames();
+      
       setSuccess(`Game "${gameToDelete.name}" has been successfully deleted`);
       setTimeout(() => setSuccess(null), 3000);
       
       setShowDeleteModal(false);
       setGameToDelete(null);
+      
+      // Add a small delay to ensure the database operation is fully complete
+      setTimeout(() => {
+        setError(null);
+      }, 500);
       
     } catch (err: any) {
       console.error('Error deleting game:', err);
@@ -153,34 +163,7 @@ const GamesPage: React.FC = () => {
     });
   };
 
-  const handleDragEnd = async (result: any) => {
-    if (!result.destination) return;
 
-    const items = Array.from(games);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
-    // Update order numbers
-    const updatedItems = items.map((item, index) => ({
-      ...item,
-      order: index
-    }));
-
-    setGames(updatedItems);
-
-    try {
-      // Send updated order to backend
-      await gameService.updateGameOrder(
-        updatedItems.map((item, index) => ({
-          id: item._id,
-          order: index
-        }))
-      );
-    } catch (err) {
-      console.error('Error updating game order:', err);
-      setError('Failed to save game order');
-    }
-  };
 
   // Simple dark background to match other boxes
   const getGameBackground = () => {
@@ -196,12 +179,12 @@ const GamesPage: React.FC = () => {
             <h1 className="text-3xl font-pixel text-white mb-2">Games Management</h1>
             <p className="text-gray-400">Manage your featured games and their display order</p>
           </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="pixel-btn bg-neon-pink text-white hover:bg-neon-pink/80 transition-colors"
-          >
-            Add New Game
-          </button>
+                     <button
+             onClick={() => setShowAddModal(true)}
+             className="pixel-btn bg-neon-pink text-white hover:bg-neon-pink/80 transition-colors"
+           >
+             Add New Game
+           </button>
         </div>
 
         {/* Success/Error Messages */}
@@ -227,94 +210,67 @@ const GamesPage: React.FC = () => {
         {/* Games List */}
         {!loading && !error && (
           <div className="bg-dark-purple/30 rounded-lg p-6">
-            <h2 className="text-xl font-pixel text-white mb-4">Games List (Drag to reorder)</h2>
+                                      <h2 className="text-xl font-pixel text-white mb-4">Games List</h2>
             
-            {games.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-300 text-lg">No games found. Create your first game!</p>
-              </div>
-            ) : (
-              <DragDropContext onDragEnd={handleDragEnd}>
-                <Droppable droppableId="games">
-                  {(provided) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                    >
-                      {games.map((game, index) => (
-                        <Draggable key={game._id} draggableId={game._id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`arcade-card overflow-hidden rounded-lg cursor-move ${
-                                snapshot.isDragging ? 'shadow-2xl scale-105' : ''
-                              }`}
-                            >
-                                                                                                                                                                                         <motion.div
-                                   className={`h-48 ${getGameBackground()} relative group`}
-                                   whileHover={{ scale: 1.02 }}
-                                 >
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <h3 className="text-2xl font-pixel text-white text-center px-4">
-                                      {game.name}
-                                    </h3>
-                                  </div>
-                                
-                                {/* Featured Badge */}
-                                {game.featured && (
-                                  <div className="absolute top-3 right-3">
-                                    <span className="px-2 py-1 text-xs rounded bg-yellow-500/90 text-black font-bold">
-                                      FEATURED
-                                    </span>
-                                  </div>
-                                )}
-                                
-                                {/* Order Badge */}
-                                <div className="absolute bottom-3 left-3">
-                                  <span className="px-2 py-1 text-xs rounded bg-black/50 text-white">
-                                    #{game.order + 1}
-                                  </span>
-                                </div>
-                                
-                                                                 
-                                 
-                                 {/* Action Buttons */}
-                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        initEditForm(game);
-                                      }}
-                                      className="px-3 py-1 bg-neon-pink text-white rounded text-sm hover:bg-neon-pink/80 transition-colors"
-                                    >
-                                      Edit
-                                    </button>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        confirmDeleteGame(game._id, game.name);
-                                      }}
-                                      className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition-colors"
-                                    >
-                                      Delete
-                                    </button>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
-            )}
+             {games.length === 0 ? (
+               <div className="text-center py-8">
+                 <p className="text-gray-300 text-lg">No games found. Create your first game!</p>
+               </div>
+             ) : (
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                 {games.map((game, index) => (
+                   <div key={game._id} className="arcade-card overflow-hidden rounded-lg">
+                     <motion.div
+                       className={`h-48 ${getGameBackground()} relative group`}
+                       whileHover={{ scale: 1.02 }}
+                     >
+                       <div className="absolute inset-0 flex items-center justify-center">
+                         <h3 className="text-2xl font-pixel text-white text-center px-4">
+                           {game.name}
+                         </h3>
+                       </div>
+                       
+                       {/* Featured Badge */}
+                       {game.featured && (
+                         <div className="absolute top-3 right-3">
+                           <span className="px-2 py-1 text-xs rounded bg-yellow-500/90 text-black font-bold">
+                             FEATURED
+                           </span>
+                         </div>
+                       )}
+                       
+                       
+                       
+                       {/* Action Buttons */}
+                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                         <div className="flex gap-2">
+                           <button
+                             onClick={(e) => {
+                               e.preventDefault();
+                               e.stopPropagation();
+                               initEditForm(game);
+                             }}
+                             className="px-3 py-1 bg-neon-pink text-white rounded text-sm hover:bg-neon-pink/80 transition-colors"
+                           >
+                             Edit
+                           </button>
+                           <button
+                             onClick={(e) => {
+                               e.preventDefault();
+                               e.stopPropagation();
+                               confirmDeleteGame(game._id, game.name);
+                             }}
+                             className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition-colors"
+                           >
+                             Delete
+                           </button>
+                         </div>
+                       </div>
+                     </motion.div>
+                   </div>
+                 ))}
+               </div>
+             )}
           </div>
         )}
 
