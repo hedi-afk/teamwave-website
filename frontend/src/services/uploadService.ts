@@ -172,8 +172,42 @@ const uploadService = {
       }
       throw error;
     }
+    },
+
+  /**
+   * Generic upload function for any type of image
+   * @param file - The file to upload
+   * @param type - The type of upload (e.g., 'products', 'news', 'members', etc.)
+   * @returns The path to the uploaded image
+   */
+  uploadImage: async (file: File, type: string = 'products'): Promise<{ url: string }> => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      // Get admin token for authentication
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        throw new Error('No admin token found. Please log in again.');
+      }
+      
+      console.log(`Uploading ${type} image to:`, `${config.apiUrl}/${type}/upload`);
+      
+      const response = await axios.post(`${config.apiUrl}/${type}/upload`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      console.log('Upload response:', response.data);
+      return { url: response.data.imagePath };
+    } catch (error) {
+      console.error(`Error uploading ${type} image:`, error);
+      throw error;
+    }
   },
-  
+
   /**
    * Upload an image for a partner/sponsor
    * @param file - The file to upload

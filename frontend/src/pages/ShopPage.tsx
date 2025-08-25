@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import config from '../config';
+import CheckoutModal from '../components/CheckoutModal';
+import SuccessNotification from '../components/SuccessNotification';
+import { useCart } from '../context/CartContext';
+import { getShopSettings } from '../services/shopSettingsService';
 
 interface Product {
   _id: string;
@@ -14,29 +18,50 @@ interface Product {
   rating: number;
 }
 
+interface CartItem {
+  _id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
 const ShopPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<'all' | 'jerseys' | 'accessories' | 'peripherals'>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [cart, setCart] = useState<Product[]>([]);
+  const { cart, addToCart, removeFromCart, updateQuantity, clearCart, totalPrice } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [shopSettings, setShopSettings] = useState<any>(null);
+
+
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get(`${config.apiUrl}/products`);
-        setProducts(data);
+        
+        // Fetch shop settings first
+        const settings = await getShopSettings();
+        setShopSettings(settings);
+        
+        // Only fetch products if shop is active
+        if (settings.isActive) {
+          const { data } = await axios.get(`${config.apiUrl}/products`);
+          setProducts(data);
+        }
+        
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching products:', error);
-        setError('Failed to load products. Please try again later.');
+        console.error('Error fetching data:', error);
+        setError('Failed to load shop data. Please try again later.');
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchData();
   }, []);
 
   const filteredProducts = products.filter(product => {
@@ -46,15 +71,12 @@ const ShopPage: React.FC = () => {
     return matchesCategory && matchesSearch;
   });
 
-  const addToCart = (product: Product) => {
-    setCart([...cart, product]);
-  };
 
-  const removeFromCart = (productId: string) => {
-    setCart(cart.filter(item => item._id !== productId));
-  };
 
-  const totalPrice = cart.reduce((sum, item) => sum + item.price, 0);
+  const handleOrderSuccess = () => {
+    clearCart(); // Use the context function to clear cart
+    setShowSuccess(true);
+  };
 
   return (
     <div className="bg-retro-black min-h-screen">
@@ -134,8 +156,21 @@ const ShopPage: React.FC = () => {
           </div>
         )}
 
+        {/* Shop Maintenance Message */}
+        {!loading && shopSettings && !shopSettings.isActive && (
+          <div className="arcade-card p-8 text-center">
+            <div className="text-neon-yellow text-2xl font-pixel mb-4">SHOP MAINTENANCE</div>
+            <p className="text-gray-300 text-lg mb-4">
+              {shopSettings.maintenanceMessage || 'Shop is currently under maintenance. Please check back later.'}
+            </p>
+            <div className="text-neon-purple text-sm">
+              Last updated: {new Date(shopSettings.updatedAt).toLocaleDateString()}
+            </div>
+          </div>
+        )}
+
         {/* Products Grid */}
-        {!loading && !error && (
+        {!loading && !error && shopSettings && shopSettings.isActive && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProducts.length === 0 ? (
               <div className="col-span-full text-center py-8">
@@ -165,18 +200,13 @@ const ShopPage: React.FC = () => {
                     <div className="absolute bottom-4 left-4 right-4">
                       <h3 className="text-xl font-pixel text-white mb-1">{product.name}</h3>
                       <div className="flex justify-between items-center">
-                        <p className="text-neon-pink font-arcade">${product.price}</p>
-                        <span className="text-sm text-gray-300">Stock: {product.stock}</span>
+                        <p className="text-neon-pink font-arcade">{product.price.toFixed(2)} DT</p>
                       </div>
                     </div>
                   </div>
                   <div className="p-4">
                     <p className="text-gray-300 text-sm mb-4">{product.description}</p>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <span className="text-yellow-400 mr-1">★</span>
-                        <span className="text-gray-300">{product.rating}</span>
-                      </div>
+                    <div className="flex justify-end">
                       <button
                         className="pixel-btn bg-neon-purple text-white hover:bg-white hover:text-dark-purple"
                         onClick={() => addToCart(product)}
@@ -196,17 +226,32 @@ const ShopPage: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="fixed bottom-8 right-8 bg-dark-purple/90 p-4 rounded-lg border-2 border-neon-purple"
+            className="fixed bottom-8 right-8 bg-dark-purple/90 p-4 rounded-lg border-2 border-neon-purple max-w-sm"
           >
             <h3 className="text-lg font-pixel text-white mb-2">Shopping Cart</h3>
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-64 overflow-y-auto">
               {cart.map(item => (
-                <div key={item._id} className="flex items-center justify-between">
-                  <span className="text-gray-300">{item.name}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-neon-pink">${item.price}</span>
+                <div key={item._id} className="flex items-center justify-between text-sm">
+                  <div className="flex-1">
+                    <div className="text-gray-300 font-medium">{item.name}</div>
+                                         <div className="text-neon-pink">{item.price.toFixed(2)} DT x {item.quantity}</div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-2">
                     <button
-                      className="text-neon-red hover:text-red-400"
+                      className="text-neon-purple hover:text-white text-xs"
+                      onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                    >
+                      -
+                    </button>
+                    <span className="text-white text-xs">{item.quantity}</span>
+                    <button
+                      className="text-neon-purple hover:text-white text-xs"
+                      onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                    >
+                      +
+                    </button>
+                    <button
+                      className="text-neon-red hover:text-red-400 text-xs ml-1"
                       onClick={() => removeFromCart(item._id)}
                     >
                       ×
@@ -214,15 +259,36 @@ const ShopPage: React.FC = () => {
                   </div>
                 </div>
               ))}
-              <div className="border-t border-neon-purple/50 pt-2 mt-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-white font-pixel">TOTAL:</span>
-                  <span className="text-neon-pink font-arcade">${totalPrice.toFixed(2)}</span>
-                </div>
+            </div>
+            <div className="border-t border-neon-purple/50 pt-2 mt-2">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-white font-pixel">TOTAL:</span>
+                                 <span className="text-neon-pink font-arcade">{totalPrice.toFixed(2)} DT</span>
               </div>
+              <button
+                className="w-full pixel-btn bg-neon-purple text-white hover:bg-white hover:text-dark-purple text-sm"
+                onClick={() => setShowCheckout(true)}
+              >
+                CHECKOUT
+              </button>
             </div>
           </motion.div>
         )}
+
+        {/* Checkout Modal */}
+        <CheckoutModal
+          isOpen={showCheckout}
+          onClose={() => setShowCheckout(false)}
+          cart={cart}
+          onOrderSuccess={handleOrderSuccess}
+        />
+
+        {/* Success Notification */}
+        <SuccessNotification
+          isVisible={showSuccess}
+          message="Order placed successfully! We'll contact you soon."
+          onClose={() => setShowSuccess(false)}
+        />
       </div>
     </div>
   );

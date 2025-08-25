@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
+import { useCart } from '../../context/CartContext';
+import { getShopSettings } from '../../services/shopSettingsService';
 
 // Define menu items with their associated colors
 const menuItems = [
@@ -14,9 +16,24 @@ const menuItems = [
 
 const Header: React.FC = () => {
   const { darkMode } = useTheme();
+  const { totalItems } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [shopSettings, setShopSettings] = useState<any>(null);
   const location = useLocation();
+
+  // Fetch shop settings on component mount
+  useEffect(() => {
+    const fetchShopSettings = async () => {
+      try {
+        const settings = await getShopSettings();
+        setShopSettings(settings);
+      } catch (error) {
+        console.error('Error fetching shop settings:', error);
+      }
+    };
+    fetchShopSettings();
+  }, []);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -89,20 +106,52 @@ const Header: React.FC = () => {
           </span>
         </Link>
 
+        {/* Cart indicator */}
+        {totalItems > 0 && shopSettings && shopSettings.isActive && (
+          <Link 
+            to="/shop" 
+            className="relative mr-4 text-neon-yellow hover:text-yellow-300 transition-colors duration-300"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+            </svg>
+            <span className="absolute -top-2 -right-2 bg-neon-pink text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+              {totalItems}
+            </span>
+          </Link>
+        )}
+
         {/* Mobile menu button */}
-        <button 
-          className="md:hidden text-white p-1"
-          onClick={toggleMenu}
-          aria-label="Toggle menu"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
-          </svg>
-        </button>
+        <div className="md:hidden flex items-center space-x-2">
+          {totalItems > 0 && shopSettings && shopSettings.isActive && (
+            <Link 
+              to="/shop" 
+              className="relative text-neon-yellow hover:text-yellow-300 transition-colors duration-300"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+              </svg>
+              <span className="absolute -top-1 -right-1 bg-neon-pink text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center animate-pulse">
+                {totalItems}
+              </span>
+            </Link>
+          )}
+          <button 
+            className="text-white p-1"
+            onClick={toggleMenu}
+            aria-label="Toggle menu"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+            </svg>
+          </button>
+        </div>
 
         {/* Desktop navigation */}
         <nav className="hidden md:flex items-center space-x-6">
-          {menuItems.map((item) => (
+          {menuItems
+            .filter(item => !(item.path === '/shop' && shopSettings && !shopSettings.isActive))
+            .map((item) => (
             <Link
               key={item.path}
               to={item.path}
@@ -144,11 +193,13 @@ const Header: React.FC = () => {
         </nav>
       </div>
 
-      {/* Mobile menu (conditional rendering) */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-dark-purple/95 border-t border-neon-purple animate-[fadeIn_0.3s_ease-in-out]">
-          <div className="flex flex-col px-4 pt-2 pb-4 space-y-2">
-            {menuItems.map((item) => (
+              {/* Mobile menu (conditional rendering) */}
+        {isMenuOpen && (
+          <div className="md:hidden bg-dark-purple/95 border-t border-neon-purple animate-[fadeIn_0.3s_ease-in-out]">
+            <div className="flex flex-col px-4 pt-2 pb-4 space-y-2">
+              {menuItems
+                .filter(item => !(item.path === '/shop' && shopSettings && !shopSettings.isActive))
+                .map((item) => (
               <Link
                 key={item.path}
                 to={item.path}

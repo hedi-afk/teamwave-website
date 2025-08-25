@@ -335,3 +335,4 @@ export const bulkDeleteRegistrations = async (req: Request, res: Response) => {
 };
 
 
+

@@ -37,12 +37,15 @@ import AdminShopPage from './pages/admin/ShopPage';
 import AdminPartnersPage from './pages/admin/PartnersPage';
 import AdminMessagesPage from './pages/admin/MessagesPage';
 import AdminSettingsPage from './pages/admin/SettingsPage';
+import OrdersPage from './pages/admin/OrdersPage';
+import ShopSettingsPage from './pages/admin/ShopSettingsPage';
 
 
 // Auth components
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { CartProvider } from './context/CartContext';
 import './App.css';
 
 // Wrapper component to provide children to Layout
@@ -58,7 +61,8 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Router>
+        <CartProvider>
+          <Router>
           <ScrollToTop />
           <AnimatePresence mode="sync">
             <Routes>
@@ -95,6 +99,8 @@ function App() {
                 <Route path="news" element={<AdminNewsPage />} />
                 <Route path="videos" element={<AdminVideosPage />} />
                 <Route path="shop" element={<AdminShopPage />} />
+                <Route path="shop-settings" element={<ShopSettingsPage />} />
+                <Route path="orders" element={<OrdersPage />} />
                 <Route path="partners" element={<AdminPartnersPage />} />
                 <Route path="messages" element={<AdminMessagesPage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
@@ -103,6 +109,7 @@ function App() {
             </Routes>
           </AnimatePresence>
         </Router>
+        </CartProvider>
       </AuthProvider>
     </ThemeProvider>
   );

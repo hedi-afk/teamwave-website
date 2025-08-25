@@ -5,27 +5,23 @@ import {
   getProductsByCategory,
   createProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  uploadProductImage
 } from '../controllers/productController';
+import { protect, admin } from '../middleware/authMiddleware';
+import uploadMiddleware from '../middleware/uploadMiddleware';
 
 const router = express.Router();
 
-// GET all products
+// Public routes
 router.get('/', getProducts);
-
-// GET products by category
 router.get('/category/:category', getProductsByCategory);
-
-// GET product by ID
 router.get('/:id', getProductById);
 
-// POST create new product
-router.post('/', createProduct);
-
-// PUT update product
-router.put('/:id', updateProduct);
-
-// DELETE product
-router.delete('/:id', deleteProduct);
+// Protected routes (admin only)
+router.post('/', protect, admin, createProduct);
+router.post('/upload', protect, admin, uploadMiddleware.single('image'), uploadProductImage);
+router.put('/:id', protect, admin, updateProduct);
+router.delete('/:id', protect, admin, deleteProduct);
 
 export default router; 

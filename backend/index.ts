@@ -18,6 +18,8 @@ import gameRoutes from './routes/games';
 import videoRoutes from './routes/videoRoutes';
 import authRoutes from './routes/authRoutes';
 import contactRoutes from './routes/contactRoutes';
+import orderRoutes from './routes/orderRoutes';
+import shopSettingsRoutes from './routes/shopSettingsRoutes';
 
 // Initialize Express
 const app = express();
@@ -61,6 +63,13 @@ const createTestFiles = () => {
   if (!fs.existsSync(partnersDir)) {
     fs.mkdirSync(partnersDir, { recursive: true });
     console.log('Created partners directory:', partnersDir);
+  }
+  
+  // Create products directory
+  const productsDir = path.join(uploadsDir, 'products');
+  if (!fs.existsSync(productsDir)) {
+    fs.mkdirSync(productsDir, { recursive: true });
+    console.log('Created products directory:', productsDir);
   }
   
   // Create images directory for games
@@ -128,6 +137,8 @@ app.use('/api/games', gameRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/shop-settings', shopSettingsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {

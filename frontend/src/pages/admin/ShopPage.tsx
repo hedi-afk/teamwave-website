@@ -1,249 +1,436 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  stock: number;
-  image: string;
-  description: string;
-}
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { getAllProducts, createProduct, updateProduct, deleteProduct, Product, CreateProductData } from '../../services/productService';
+import uploadService from '../../services/uploadService';
+import config from '../../config';
 
 const ShopPage: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: '1',
-      name: 'TeamWave Official Jersey',
-      category: 'Apparel',
-      price: 59.99,
-      stock: 25,
-      image: '/images/shop/jersey.jpg',
-      description: 'Official team jersey with logo and sponsored branding.'
-    },
-    {
-      id: '2',
-      name: 'Gaming Mouse Pad XL',
-      category: 'Accessories',
-      price: 24.99,
-      stock: 50,
-      image: '/images/shop/mousepad.jpg',
-      description: 'Extra large gaming mouse pad with TeamWave logo.'
-    },
-    {
-      id: '3',
-      name: 'TeamWave Snapback Cap',
-      category: 'Apparel',
-      price: 29.99,
-      stock: 35,
-      image: '/images/shop/cap.jpg',
-      description: 'Stylish snapback cap with embroidered logo.'
-    },
-    {
-      id: '4',
-      name: 'LED Gaming Keyboard',
-      category: 'Hardware',
-      price: 149.99,
-      stock: 10,
-      image: '/images/shop/keyboard.jpg',
-      description: 'Mechanical gaming keyboard with custom TeamWave keycaps.'
-    }
-  ]);
-
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [formData, setFormData] = useState<CreateProductData>({
+    name: '',
+    description: '',
+    category: 'jerseys',
+    price: 0,
+    image: '',
+    stock: 10, // Default stock value since field is hidden
+  });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const data = await getAllProducts();
+      setProducts(data);
+      setError('');
+    } catch (error: any) {
+      setError('Failed to load products');
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.description || formData.price <= 0) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    setSubmitting(true);
+    setError('');
+
+    try {
+      let imageUrl = formData.image;
+
+      // Upload image if a new file is selected
+      if (imageFile) {
+        const uploadResult = await uploadService.uploadImage(imageFile, 'products');
+        imageUrl = uploadResult.url;
+      }
+
+      const productData = {
+        ...formData,
+        image: imageUrl,
+      };
+
+      if (selectedProduct) {
+        // Update existing product
+        await updateProduct(selectedProduct._id, productData);
+      } else {
+        // Create new product
+        await createProduct(productData);
+      }
+
+      fetchProducts();
+      handleCloseModal();
+    } catch (error: any) {
+      setError(error.response?.data?.message || 'Failed to save product');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEdit = (product: Product) => {
+    setSelectedProduct(product);
+    setFormData({
+      name: product.name,
+      description: product.description,
+      category: product.category,
+      price: product.price,
+      image: product.image,
+      stock: product.stock,
+    });
+    setImagePreview(product.image ? `${config.imageBaseUrl}${product.image}` : '');
+    setImageFile(null);
+    setShowEditModal(true);
+  };
+
+  const handleDelete = async (productId: string) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      try {
+        await deleteProduct(productId);
+        fetchProducts();
+      } catch (error: any) {
+        setError('Failed to delete product');
+        console.error('Error deleting product:', error);
+      }
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowAddModal(false);
+    setShowEditModal(false);
+    setSelectedProduct(null);
+    setFormData({
+      name: '',
+      description: '',
+      category: 'jerseys',
+      price: 0,
+      image: '',
+      stock: 10, // Default stock value since field is hidden
+    });
+    setImageFile(null);
+    setImagePreview('');
+    setError('');
+  };
 
   const filteredProducts = activeFilter === 'all' 
     ? products 
-    : products.filter(product => product.category.toLowerCase() === activeFilter.toLowerCase());
+    : products.filter(product => product.category === activeFilter);
 
-  const sumStock = products.reduce((sum, product) => sum + product.stock, 0);
-  const sumValue = products.reduce((sum, product) => sum + (product.price * product.stock), 0);
-  const uniqueCategories = ['all', ...Array.from(new Set(products.map(product => product.category.toLowerCase())))];
+  const totalValue = products.reduce((sum, product) => sum + (product.price * product.stock), 0);
+  const categories = ['all', 'jerseys', 'accessories', 'peripherals'];
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'jerseys': return 'bg-neon-pink/20 text-neon-pink';
+      case 'accessories': return 'bg-neon-green/20 text-neon-green';
+      case 'peripherals': return 'bg-neon-blue/20 text-neon-blue';
+      default: return 'bg-gray-500/20 text-gray-400';
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-retro-black pt-24 pb-12">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-neon-pink">Shop Management</h1>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-yellow-400 text-dark-purple px-4 py-2 rounded-md hover:bg-yellow-300 transition-colors"
-          >
-            Add Product
-          </button>
+    <div className="bg-retro-black min-h-screen p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-pixel text-yellow-400 mb-2">SHOP MANAGEMENT</h1>
+          <p className="text-gray-300">Manage products and inventory</p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-dark-purple-light p-6 rounded-lg border border-neon-purple/20">
-            <h2 className="text-lg font-semibold text-gray-300 mb-2">Total Products</h2>
-            <p className="text-3xl font-bold text-yellow-400">{products.length}</p>
+          <div className="arcade-card p-6 text-center">
+            <div className="text-2xl font-pixel text-white">{products.length}</div>
+            <div className="text-sm text-gray-300">Total Products</div>
           </div>
-          <div className="bg-dark-purple-light p-6 rounded-lg border border-neon-purple/20">
-            <h2 className="text-lg font-semibold text-gray-300 mb-2">Total Stock</h2>
-            <p className="text-3xl font-bold text-yellow-400">{sumStock}</p>
+          <div className="arcade-card p-6 text-center">
+            <div className="text-2xl font-pixel text-neon-pink">{totalValue.toFixed(2)} DT</div>
+            <div className="text-sm text-gray-300">Inventory Value</div>
           </div>
-          <div className="bg-dark-purple-light p-6 rounded-lg border border-neon-purple/20">
-            <h2 className="text-lg font-semibold text-gray-300 mb-2">Inventory Value</h2>
-            <p className="text-3xl font-bold text-yellow-400">${sumValue.toFixed(2)}</p>
+          <div className="arcade-card p-6 text-center">
+            <div className="text-2xl font-pixel text-neon-green">{products.filter(p => p.stock > 0).length}</div>
+            <div className="text-sm text-gray-300">In Stock</div>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="mb-6">
+        {/* Actions */}
+        <div className="flex justify-between items-center mb-6">
           <div className="flex flex-wrap gap-2">
-            {uniqueCategories.map((category) => (
+            {categories.map((category) => (
               <button
                 key={category}
-                className={`px-3 py-1 rounded-full text-sm transition-colors capitalize ${
-                  activeFilter === category 
-                    ? 'bg-yellow-400 text-dark-purple' 
-                    : 'bg-dark-purple-light text-gray-300 hover:bg-yellow-400/40'
-                }`}
+                className={`pixel-btn text-sm ${activeFilter === category ? 'bg-neon-purple text-white' : 'border-neon-purple text-neon-purple'}`}
                 onClick={() => setActiveFilter(category)}
               >
-                {category}
+                {category.toUpperCase()}
               </button>
             ))}
           </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="pixel-btn bg-neon-green text-white hover:bg-white hover:text-dark-purple"
+          >
+            ADD PRODUCT
+          </button>
         </div>
 
-        {/* Products Table */}
-        <div className="bg-dark-purple-light rounded-lg border border-neon-purple/20 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-neon-purple/20">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Price</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Stock</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neon-purple/20">
-                {filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-neon-purple/5">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0 rounded overflow-hidden bg-dark-purple">
-                          <img src={product.image} alt={product.name} className="h-10 w-10 object-cover" />
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-white">{product.name}</div>
-                          <div className="text-xs text-gray-400 truncate max-w-xs">{product.description}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        product.category.toLowerCase() === 'apparel' ? 'bg-purple-500/20 text-purple-400' :
-                        product.category.toLowerCase() === 'accessories' ? 'bg-blue-500/20 text-blue-400' :
-                        product.category.toLowerCase() === 'hardware' ? 'bg-green-500/20 text-green-400' :
-                        'bg-gray-500/20 text-gray-400'
-                      }`}>
-                        {product.category}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-white">${product.price.toFixed(2)}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`text-sm ${product.stock < 10 ? 'text-red-400' : 'text-white'}`}>{product.stock}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button className="text-neon-blue hover:text-neon-blue/80 mr-3">Edit</button>
-                      <button className="text-red-500 hover:text-red-400">Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Error Message */}
+        {error && (
+          <div className="arcade-card p-4 mb-6 border-neon-red">
+            <div className="text-neon-red text-center">{error}</div>
           </div>
-        </div>
+        )}
 
-        {/* Add Product Modal - simplified for this example */}
-        {showAddModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="text-neon-purple text-xl font-pixel">LOADING PRODUCTS...</div>
+          </div>
+        )}
+
+        {/* Products Grid */}
+        {!loading && !error && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProducts.length === 0 ? (
+              <div className="col-span-full text-center py-8">
+                <div className="text-gray-300 text-lg">No products found.</div>
+              </div>
+            ) : (
+              filteredProducts.map(product => (
+                <motion.div
+                  key={product._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="arcade-card overflow-hidden group"
+                >
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={`${config.imageBaseUrl}${product.image}`}
+                      alt={product.name}
+                      className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://placehold.co/400x300/1A0033/FFFFFF?text=No+Image";
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-dark-purple via-dark-purple/50 to-transparent opacity-80"></div>
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <h3 className="text-lg font-pixel text-white mb-1">{product.name}</h3>
+                      <div className="flex justify-between items-center">
+                        <p className="text-neon-pink font-arcade">{product.price.toFixed(2)} DT</p>
+                        <span className={`px-2 py-1 text-xs font-pixel rounded ${getCategoryColor(product.category)}`}>
+                          {product.category.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <p className="text-gray-300 text-sm mb-4 line-clamp-2">{product.description}</p>
+                    <div className="flex justify-between items-center text-xs text-gray-400 mb-3">
+                      <span>Added: {formatDate(product.createdAt)}</span>
+                      <div className="flex items-center">
+                        <span className="text-yellow-400 mr-1">★</span>
+                        <span>{product.rating}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        className="flex-1 pixel-btn bg-neon-purple text-white hover:bg-white hover:text-dark-purple text-sm"
+                        onClick={() => handleEdit(product)}
+                      >
+                        EDIT
+                      </button>
+                      <button
+                        className="flex-1 pixel-btn border-neon-red text-neon-red hover:bg-neon-red hover:text-white text-sm"
+                        onClick={() => handleDelete(product._id)}
+                      >
+                        DELETE
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Add/Edit Product Modal */}
+      <AnimatePresence>
+        {(showAddModal || showEditModal) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+            onClick={handleCloseModal}
+          >
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-dark-purple-light p-6 rounded-lg w-full max-w-2xl"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-dark-purple border-2 border-neon-purple rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-2xl font-bold text-yellow-400 mb-4">Add Product</h2>
-              <form className="space-y-4">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-pixel text-white">
+                  {selectedProduct ? 'EDIT PRODUCT' : 'ADD NEW PRODUCT'}
+                </h2>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-neon-red hover:text-red-400 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-white mb-1">Product Name</label>
+                  <label className="block text-neon-purple font-pixel text-sm mb-2">
+                    PRODUCT NAME *
+                  </label>
                   <input
                     type="text"
-                    className="w-full px-4 py-2 bg-dark-purple border border-neon-purple/30 rounded-md text-white"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full bg-dark-purple/50 border-2 border-neon-purple text-white px-3 py-2 rounded-lg focus:outline-none focus:border-neon-pink"
+                    placeholder="Enter product name"
+                    required
                   />
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                <div>
+                  <label className="block text-neon-purple font-pixel text-sm mb-2">
+                    DESCRIPTION *
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full bg-dark-purple/50 border-2 border-neon-purple text-white px-3 py-2 rounded-lg focus:outline-none focus:border-neon-pink resize-none"
+                    placeholder="Enter product description"
+                    rows={3}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-white mb-1">Category</label>
-                    <select className="w-full px-4 py-2 bg-dark-purple border border-neon-purple/30 rounded-md text-white">
-                      <option>Apparel</option>
-                      <option>Accessories</option>
-                      <option>Hardware</option>
-                      <option>Other</option>
+                    <label className="block text-neon-purple font-pixel text-sm mb-2">
+                      CATEGORY *
+                    </label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+                      className="w-full bg-dark-purple/50 border-2 border-neon-purple text-white px-3 py-2 rounded-lg focus:outline-none focus:border-neon-pink"
+                      required
+                    >
+                      <option value="jerseys">JERSEYS</option>
+                      <option value="accessories">ACCESSORIES</option>
+                      <option value="peripherals">PERIPHERALS</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-white mb-1">Price ($)</label>
+                    <label className="block text-neon-purple font-pixel text-sm mb-2">
+                      PRICE (DT) *
+                    </label>
                     <input
                       type="number"
                       step="0.01"
-                      className="w-full px-4 py-2 bg-dark-purple border border-neon-purple/30 rounded-md text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-1">Stock</label>
-                    <input
-                      type="number"
-                      className="w-full px-4 py-2 bg-dark-purple border border-neon-purple/30 rounded-md text-white"
+                      min="0"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                      className="w-full bg-dark-purple/50 border-2 border-neon-purple text-white px-3 py-2 rounded-lg focus:outline-none focus:border-neon-pink"
+                      placeholder="0.00"
+                      required
                     />
                   </div>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-white mb-1">Description</label>
-                  <textarea
-                    className="w-full px-4 py-2 bg-dark-purple border border-neon-purple/30 rounded-md text-white h-24"
-                  ></textarea>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-white mb-1">Product Image</label>
+                  <label className="block text-neon-purple font-pixel text-sm mb-2">
+                    PRODUCT IMAGE
+                  </label>
                   <input
                     type="file"
-                    className="w-full px-4 py-2 bg-dark-purple border border-neon-purple/30 rounded-md text-white"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="w-full bg-dark-purple/50 border-2 border-neon-purple text-white px-3 py-2 rounded-lg focus:outline-none focus:border-neon-pink"
                   />
+                  {imagePreview && (
+                    <div className="mt-2">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-32 h-32 object-cover rounded border border-neon-purple"
+                      />
+                    </div>
+                  )}
                 </div>
-                
-                <div className="flex justify-end space-x-3">
+
+                {error && (
+                  <div className="text-neon-red text-sm text-center p-2 bg-red-900/20 border border-neon-red rounded">
+                    {error}
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-4">
                   <button
                     type="button"
-                    onClick={() => setShowAddModal(false)}
-                    className="px-4 py-2 text-white hover:text-yellow-400 transition-colors"
+                    onClick={handleCloseModal}
+                    className="flex-1 pixel-btn border-neon-red text-neon-red hover:bg-neon-red hover:text-white"
+                    disabled={submitting}
                   >
-                    Cancel
+                    CANCEL
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-yellow-400 text-dark-purple rounded-md hover:bg-yellow-300 transition-colors"
+                    className="flex-1 pixel-btn bg-neon-purple text-white hover:bg-white hover:text-dark-purple"
+                    disabled={submitting}
                   >
-                    Add Product
+                    {submitting ? 'SAVING...' : (selectedProduct ? 'UPDATE' : 'ADD PRODUCT')}
                   </button>
                 </div>
               </form>
             </motion.div>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 };
